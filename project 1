@@ -1,0 +1,43 @@
+1. FRONTEND: Video Player with Paywall
+// components/VideoPlayer.js
+import React from 'react';
+
+export default function VideoPlayer({ user, videoUrl }) {
+  const hasAccess = user.subscriptionStatus === 'active';
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      {!hasAccess && (
+        <div style={{ position: 'absolute', zIndex: 10, background: 'rgba(0,0,0,0.8)', color: 'white', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h2>Access Locked</h2>
+          <button onClick={() => window.location.href = '/checkout'}>Pay Summer Fee</button>
+        </div>
+      )}
+      <video src={hasAccess ? videoUrl : ''} controls={hasAccess} style={{ width: '100%', filter: hasAccess ? 'none' : 'blur(15px)' }} />
+    </div>
+  );
+}
+
+// 2. BACKEND: Stripe Checkout
+// pages/api/checkout.js
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+export default async function handler(req, res) {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [{ price: 'YOUR_PRICE_ID', quantity: 1 }],
+    mode: 'subscription',
+    success_url: '[suspicious link removed]',
+    cancel_url: '[suspicious link removed]',
+  });
+  res.json({ id: session.id });
+}
+
+// 3. AI ASSISTANT: Search Logic
+// lib/ai.js
+export async function askAssistant(query) {
+  const res = await fetch('/api/ai', {
+    method: 'POST',
+    body: JSON.stringify({ prompt: query })
+  });
+  return res.json();
+}
